@@ -38,13 +38,19 @@ async function run(){
             const food = await foodCollection.findOne(query)
             res.send(food)
         })
+        app.post('/foodAdd', async(req, res) =>{
+            const add = req.body
+            const result = await foodCollection.insertOne(add)
+            console.log(result);
+            res.send(result)
+        })
 
     }
     finally{
 
     }
 }
-run().catch(error => console.log(error))
+run().catch(error => console.error(error))
 
 
 
