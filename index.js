@@ -85,6 +85,22 @@ async function run(){
             const result = await reviewCollection.insertOne(reviews)
             res.send(result)
         })
+        app.put('/allReviews/:id', async(req, res) =>{
+            const id = req.params.id
+            const filter = {_id: ObjectId(id)}
+            const review = req.body
+            const option = {upsert: true}
+            const updateReview =  {
+                $set:{
+                    name: review.name,
+                    text: review.text
+                }
+            }
+            const result = await reviewCollection.updateOne(filter, updateReview, option)
+            res.send(result)
+            
+        })
+
         app.delete('/allReviews/:id', async(req, res) =>{
             const id = req.params.id
             const query = {_id: ObjectId(id) }
