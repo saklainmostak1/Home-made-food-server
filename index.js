@@ -60,6 +60,18 @@ async function run(){
             const review = await cursor.toArray()
             res.send(review)
         } )
+        app.get('/foodReviews', async(req, res)=>{
+            console.log(req.query);
+            let query = {}
+            if(req.query.service){
+                query = {
+                   service: req.query.service 
+                }
+            }
+            const cursor = reviewCollection.find(query)
+            const review = await cursor.toArray()
+            res.send(review)
+        } )
       
         
         app.post('/foodAdd', async(req, res) =>{
@@ -78,6 +90,12 @@ async function run(){
         app.post('/reviews', async(req, res) =>{
             const reviews = req.body
             const result = await reviewCollection.insertOne(reviews)
+            res.send(result)
+        })
+        app.delete('/allReviews/:id', async(req, res) =>{
+            const id = req.params.id
+            const query = {_id: ObjectId(id) }
+            const result = await reviewCollection.deleteOne(query)
             res.send(result)
         })
        
