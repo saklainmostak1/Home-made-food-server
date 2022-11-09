@@ -41,14 +41,7 @@ async function run(){
             const food = await foodCollection.findOne(query)
             res.send(food)
         })
-        // app.get('/allReviews', async(req, res)=>{
-        //     // console.log(req.query);
-        //     const query = {}
-        //     const cursor = reviewCollection.find(query)
-        //     const review = await cursor.toArray()
-        //     res.send(review)
-        // } )
-      
+        
         app.get('/allReviews', async(req, res)=>{
             let query = {}
             if(req.query.email){
@@ -80,13 +73,7 @@ async function run(){
             console.log(result);
             res.send(result)
         })
-        // app.post('/reviews/:id', async(req, res) =>{
-        //     const id = req.params.id
-        //     const query = {_id: ObjectId(id)}
-        //     const review = await reviewCollection.findOne(query)
-        //     res.send(review)
-        // })
-        
+       
         app.post('/reviews', async(req, res) =>{
             const reviews = req.body
             const result = await reviewCollection.insertOne(reviews)
