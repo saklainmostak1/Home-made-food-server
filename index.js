@@ -1,14 +1,13 @@
 const express = require('express');
 const app = express()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const jwt = require('jsonwebtoken')
 require('dotenv').config()
 const cors = require('cors')
 const port = process.env.PORT || 5000
 
 app.use(cors())
 app.use(express.json())
-
-//  foodUser1 H73TZzKnwmOlOlwH
 
 
 
@@ -17,101 +16,128 @@ console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
-async function run(){
-    try{
+function verifyJWT(req, res, next){
+    const authHeader = req.headers.authorization
+    if(!authHeader){
+      return  res.status(401).send({message: 'unauthorize access'})
+    }
+    const token = authHeader.split(' ')[1]
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(error, decoded){
+        if(error){
+          return  res.status(403).send({message: 'unauthorize access'})
+
+        }
+        req.decoded = decoded;
+        next()
+    })
+}
+
+async function run() {
+    try {
         const foodCollection = client.db('homeFood').collection('services')
 
         const reviewCollection = client.db('homeFood').collection('reviews')
 
-        app.get('/foods', async(req, res) =>{
-           const query = {}
-           const cursor =  foodCollection.find(query)
-           const foods = await cursor.limit(3).toArray()
+        app.post('/jwt', (req, res)=>{
+            const user = req.body
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET)
+            res.send({token})
+        })
+        app.get('/foods', async (req, res) => {
+            const query = {}
+            const cursor = foodCollection.find(query)
+            const foods = await cursor.limit(3).toArray()
             res.send(foods)
         })
-        app.get('/allFoods', async(req, res) =>{
-           const query = {}
-           const cursor =  foodCollection.find(query)
-           const foods = await cursor.toArray()
+        app.get('/allFoods', async (req, res) => {
+            const query = {}
+            const cursor = foodCollection.find(query)
+            const foods = await cursor.toArray()
             res.send(foods)
         })
-        app.get('/foods/:id', async(req, res) =>{
+        app.get('/foods/:id', async (req, res) => {
             const id = req.params.id
-            const query = {_id: ObjectId(id)}
+            const query = { _id: ObjectId(id) }
             const food = await foodCollection.findOne(query)
             res.send(food)
         })
-        
-        app.get('/allReviews', async(req, res)=>{
+
+        app.get('/allReviews',verifyJWT, async (req, res) => {
+            // console.log(req.headers.authorization);
+            const decoded = req.decoded
+            console.log('review show',decoded);
+            if(decoded.email !== req.query.email){
+                res.status(403).send({message: 'unauthorized access'})
+            }
             let query = {}
-            if(req.query.email){
+            if (req.query.email) {
                 query = {
-                   email: req.query.email 
+                    email: req.query.email
                 }
             }
             const cursor = reviewCollection.find(query)
             const review = await cursor.toArray()
             res.send(review)
-        } )
-        app.get('/allReviews/:id', async(req, res) =>{
+        })
+        app.get('/allReviews/:id', async (req, res) => {
             const id = req.params.id
-            const query = {_id: ObjectId(id)}
+            const query = { _id: ObjectId(id) }
             const review = await reviewCollection.findOne(query)
             res.send(review)
         })
-        app.get('/foodReviews', async(req, res)=>{
+        app.get('/foodReviews', async (req, res) => {
             console.log(req.query);
             let query = {}
-            if(req.query.service){
+            if (req.query.service) {
                 query = {
-                   service: req.query.service 
+                    service: req.query.service
                 }
             }
             const cursor = reviewCollection.find(query)
             const review = await cursor.toArray()
             res.send(review)
-        } )
-      
-        
-        app.post('/foodAdd', async(req, res) =>{
+        })
+
+
+        app.post('/foodAdd', async (req, res) => {
             const add = req.body
             const result = await foodCollection.insertOne(add)
             console.log(result);
             res.send(result)
         })
-       
-        app.post('/reviews', async(req, res) =>{
+
+        app.post('/reviews', async (req, res) => {
             const reviews = req.body
             const result = await reviewCollection.insertOne(reviews)
             res.send(result)
         })
-        app.put('/allReviews/:id', async(req, res) =>{
+        app.put('/allReviews/:id', async (req, res) => {
             const id = req.params.id
-            const filter = {_id: ObjectId(id)}
+            const filter = { _id: ObjectId(id) }
             const review = req.body
-            const option = {upsert: true}
-            const updateReview =  {
-                $set:{
+            const option = { upsert: true }
+            const updateReview = {
+                $set: {
                     name: review.name,
                     text: review.text
                 }
             }
             const result = await reviewCollection.updateOne(filter, updateReview, option)
             res.send(result)
-            
+
         })
 
-        app.delete('/allReviews/:id', async(req, res) =>{
+        app.delete('/allReviews/:id', async (req, res) => {
             const id = req.params.id
-            const query = {_id: ObjectId(id) }
+            const query = { _id: ObjectId(id) }
             const result = await reviewCollection.deleteOne(query)
             res.send(result)
         })
-        
-       
+
+
 
     }
-    finally{
+    finally {
 
     }
 }
@@ -120,11 +146,11 @@ run().catch(error => console.error(error))
 
 
 
-app.use('/', (req, res) =>{
+app.use('/', (req, res) => {
     res.send('Food review ')
 })
 
 
-app.listen(port, (req, res) =>{
+app.listen(port, (req, res) => {
     console.log('Api is running on', port);
 })
