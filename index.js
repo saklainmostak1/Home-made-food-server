@@ -1,6 +1,5 @@
 const express = require('express');
 const app = express()
-// const jwt = require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const cors = require('cors')
@@ -43,7 +42,6 @@ async function run() {
         })
 
         app.get('/allReviews',  async (req, res) => {
-            // console.log(req.headers.authorization);
             let query = {}
             if (req.query.email) {
                 query = {
